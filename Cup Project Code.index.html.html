@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Woven Joy | Verse of the Day</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #fdfbf7;
+            color: #2d3436;
+            -webkit-font-smoothing: antialiased;
+        }
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+        html[lang^="zh"] .serif {
+            font-family: 'Noto Serif SC', serif;
+            font-style: normal;
+        }
+        .fade-in {
+            animation: fadeIn 1.2s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loader {
+            border-top-color: #8e735b;
+            animation: spinner 0.6s linear infinite;
+        }
+        @keyframes spinner {
+            to { transform: rotate(360deg); }
+        }
+        .joy-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(142, 115, 91, 0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-6 py-12 md:py-24">
+
+    <div id="app-container" class="max-w-3xl w-full text-center fade-in">
+        <!-- Date -->
+        <p id="date-display" class="uppercase tracking-[0.3em] text-[10px] md:text-xs text-stone-400 mb-10 font-medium"></p>
+
+        <!-- Loading -->
+        <div id="loading" class="flex flex-col items-center py-20">
+            <div class="loader ease-linear rounded-full border-2 border-t-2 border-stone-200 h-10 w-10 mb-4"></div>
+            <p id="loading-text" class="text-stone-400 italic font-light tracking-wide"></p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="content" class="hidden">
+            <h1 id="verse-text" class="serif text-3xl md:text-5xl italic leading-relaxed mb-8 text-stone-800 px-4"></h1>
+            <p id="verse-ref" class="text-lg font-semibold text-stone-500 tracking-widest mb-12"></p>
+            
+            <div class="flex flex-wrap justify-center gap-3 mb-16">
+                <button id="copy-btn" onclick="copyVerse()" class="text-[10px] font-semibold uppercase tracking-widest text-stone-400 hover:text-stone-700 transition-all border border-stone-200 px-5 py-2.5 rounded-full">
+                    Copy Reference
+                </button>
+                <button id="prayer-btn" onclick="showContent('prayer')" class="text-[10px] font-semibold uppercase tracking-widest bg-stone-800 text-stone-50 px-5 py-2.5 rounded-full hover:bg-stone-700 transition-all shadow-md">
+                    ✨ Guided Prayer
+                </button>
+                <button id="church-btn" onclick="showContent('church')" class="text-[10px] font-semibold uppercase tracking-widest bg-stone-100 text-stone-800 px-5 py-2.5 rounded-full border border-stone-200 hover:bg-stone-200 transition-all">
+                    ✨ Find a Community
+                </button>
+            </div>
+
+            <!-- Content Panel -->
+            <div id="insight-panel" class="hidden text-left p-8 rounded-3xl joy-card fade-in transition-all duration-500 max-w-xl mx-auto">
+                <div class="flex items-center justify-between mb-6 border-b border-stone-100 pb-4">
+                    <h3 id="panel-title" class="serif text-2xl font-bold text-stone-800"></h3>
+                    <button onclick="document.getElementById('insight-panel').classList.add('hidden')" class="text-stone-400 hover:text-stone-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+                <div id="panel-body" class="text-stone-600 leading-relaxed text-base italic"></div>
+            </div>
+        </div>
+
+        <div id="error" class="hidden text-red-800 mt-10">
+            <p id="error-text" class="text-sm font-medium">Please refresh to try again.</p>
+        </div>
+    </div>
+
+    <footer id="footer-text" class="mt-20 text-[10px] uppercase tracking-[0.4em] text-stone-400 text-center px-4 font-medium opacity-60">
+        Woven Joy • 365 Days of Grace
+    </footer>
+
+    <script>
+        const i18n = {
+            en: {
+                loading: "Gathering joy...",
+                copy: "Copy Reference",
+                copied: "Copied!",
+                footer: "Woven Joy • 365 Days of Grace",
+                translation: "kjv",
+                prayerTitle: "Guided Prayer",
+                churchTitle: "Find a Community",
+                prayer: "Dear Lord, thank You for Your word today. May Your peace weave into my heart, guiding my thoughts and steps. I trust in Your faithful goodness. Amen.",
+                church: "We encourage you to seek out a local Christian church family. Pray and trust that God will faithfully lead you to the right place where you can find belonging and grow in faith."
+            },
+            zh: {
+                loading: "正在编织喜乐...",
+                copy: "复制引用",
+                copied: "已复制",
+                footer: "Woven Joy • 365 天的恩典",
+                translation: "cuv",
+                prayerTitle: "今日祷告",
+                churchTitle: "寻找属灵群体",
+                prayer: "亲爱的主，感谢你今天的教导。愿你的平安编织进我的心中，指引我的意念与脚步。我信靠你信实的恩典。阿们。",
+                church: "我们鼓励你寻找并参加当地的基督教会。请祷告并相信，上帝必会忠心地引领你找到合适的属灵家园，让你在团契中成长并找到归属。"
+            },
+            es: {
+                loading: "Cargando alegría...",
+                copy: "Copiar Referencia",
+                copied: "¡Copiado!",
+                footer: "Woven Joy • 365 Días de Gracia",
+                translation: "rv1909",
+                prayerTitle: "Oración Guiada",
+                churchTitle: "Buscar Comunidad",
+                prayer: "Querido Señor, gracias por Tu palabra hoy. Que Tu paz se entreteja en mi corazón, guiando mis pensamientos y mis pasos. Confío en Tu fiel bondad. Amén.",
+                church: "Te animamos a buscar una familia de iglesia cristiana local. Ora y confía en que Dios te guiará fielmente al lugar correcto donde puedas encontrar pertenencia y crecer en la fe."
+            },
+            fr: {
+                loading: "Tissage de la joie...",
+                copy: "Copier la Référence",
+                copied: "Copié !",
+                footer: "Woven Joy • 365 Jours de Grâce",
+                translation: "lsg",
+                prayerTitle: "Prière Guidée",
+                churchTitle: "Trouver une Communauté",
+                prayer: "Seigneur, merci pour Ta parole aujourd'hui. Que Ta paix se tisse dans mon cœur et guide mes pas. J'ai confiance en Ta bonté fidèle. Amen.",
+                church: "Nous vous encourageons vivement à chercher une église chrétienne locale. Priez et ayez confiance que Dieu vous guidera fidèlement vers le bon endroit pour grandir dans la foi."
+            },
+            pt: {
+                loading: "Tecendo alegria...",
+                copy: "Copiar Referência",
+                copied: "Copiado!",
+                footer: "Woven Joy • 365 Dias de Graça",
+                translation: "almeida",
+                prayerTitle: "Oração Guiada",
+                churchTitle: "Encontrar Comunidade",
+                prayer: "Querido Senhor, obrigado pela Tua palavra hoje. Que a Tua paz se entrelace em meu coração, guiando meus pensamentos e passos. Confio na Tua bondade fiel. Amém.",
+                church: "Incentivamos você a procurar uma igreja cristã local. Ore e confie que Deus o guará fielmente ao lugar certo, onde você encontrará pertença e crescerá na fé."
+            }
+        };
+
+        const fullLang = navigator.language;
+        const baseLang = fullLang.split('-')[0];
+        const lang = i18n[baseLang] ? baseLang : 'en'; 
+        const t = i18n[lang];
+        document.documentElement.lang = fullLang;
+
+        // Complete list of 365 unique verses for the year
+        const verseList = [
+            "Psalm 23:1", "John 3:16", "Romans 8:28", "Philippians 4:13", "Jeremiah 29:11", "Proverbs 3:5", "Isaiah 40:31", "Matthew 6:33", "Psalm 46:1", "Lamentations 3:22",
+            "Joshua 1:9", "Romans 12:2", "Hebrews 11:1", "1 John 4:18", "Psalm 119:105", "Matthew 11:28", "Isaiah 41:10", "2 Timothy 1:7", "Galatians 5:22", "Psalm 34:8",
+            "Romans 15:13", "1 Corinthians 13:4", "Proverbs 18:10", "Psalm 27:1", "Matthew 5:16", "Colossians 3:23", "Ephesians 2:8", "Psalm 107:1", "Nahum 1:7", "Hebrews 13:8",
+            "James 1:5", "Psalm 19:14", "1 Peter 5:7", "Matthew 28:20", "John 14:27", "Psalm 145:18", "Romans 8:31", "Isaiah 26:3", "Psalm 118:24", "Micah 6:8",
+            "John 16:33", "Psalm 37:4", "Proverbs 3:6", "Romans 5:8", "Matthew 7:7", "Psalm 121:1", "Isaiah 43:2", "Philippians 4:6", "1 Peter 2:9", "Psalm 100:5",
+            "John 1:1", "Romans 10:9", "Proverbs 4:23", "Psalm 1:1", "Isaiah 55:6", "Matthew 5:6", "1 John 1:9", "Psalm 34:1", "Ephesians 6:10", "Colossians 3:2",
+            "Psalm 51:10", "John 15:5", "Romans 12:12", "Isaiah 40:29", "1 Chronicles 16:11", "Psalm 32:8", "Matthew 19:26", "2 Corinthians 5:17", "Psalm 119:11", "Proverbs 16:3",
+            "Psalm 139:14", "Philippians 4:19", "Hebrews 4:16", "1 John 4:8", "John 8:12", "Romans 8:1", "Psalm 23:4", "Isaiah 54:17", "Matthew 22:37", "James 4:8",
+            "Psalm 91:1", "1 Peter 5:10", "Galatians 2:20", "Proverbs 3:27", "John 10:10", "Romans 12:1", "Isaiah 12:2", "Psalm 16:11", "Ephesians 4:32", "Colossians 3:14",
+            "Matthew 18:20", "Psalm 62:1", "1 Corinthians 10:13", "James 1:2", "Romans 1:16", "Isaiah 53:5", "Psalm 37:5", "Philippians 1:6", "John 11:25", "Revelation 21:4",
+            "Psalm 103:1", "Proverbs 15:1", "1 Thessalonians 5:16", "Matthew 5:9", "John 13:34", "Romans 15:4", "Psalm 25:4", "Isaiah 9:6", "Ephesians 2:10", "Hebrews 12:1",
+            "Psalm 84:11", "John 14:6", "Romans 8:38", "1 John 3:1", "Philippians 2:3", "Psalm 119:9", "Isaiah 40:8", "Matthew 25:40", "James 1:22", "1 Peter 3:15",
+            "Psalm 136:1", "Proverbs 17:17", "John 15:13", "Romans 5:1", "1 Corinthians 16:14", "Isaiah 6:8", "Psalm 40:1", "Philippians 4:7", "Matthew 6:34", "Titus 3:5",
+            "Psalm 147:3", "Proverbs 19:21", "John 1:12", "Romans 6:23", "Ephesians 4:2", "Isaiah 41:13", "Psalm 55:22", "Hebrews 10:24", "1 John 5:4", "Matthew 5:44",
+            "Psalm 28:7", "Proverbs 22:6", "John 14:15", "Romans 12:21", "1 Peter 4:8", "Isaiah 55:11", "Psalm 63:1", "Philippians 4:8", "Matthew 7:12", "Colossians 3:17",
+            "Psalm 119:165", "Proverbs 27:17", "John 16:24", "Romans 10:17", "Ephesians 5:1", "Isaiah 30:15", "Psalm 18:2", "Hebrews 11:6", "1 John 4:19", "Matthew 11:29",
+            "Psalm 34:18", "Proverbs 12:25", "John 3:17", "Romans 8:39", "1 Corinthians 1:9", "Isaiah 58:11", "Psalm 37:7", "Philippians 2:13", "Matthew 5:3", "Galatians 6:9",
+            "Psalm 119:50", "Proverbs 14:29", "John 6:35", "Romans 12:10", "Ephesians 3:20", "Isaiah 61:1", "Psalm 73:26", "Hebrews 13:5", "1 John 3:18", "Matthew 18:3",
+            "Psalm 138:8", "Proverbs 15:13", "John 17:17", "Romans 5:5", "1 Corinthians 15:58", "Isaiah 44:22", "Psalm 27:14", "Philippians 3:14", "Matthew 24:35", "2 Peter 3:9",
+            "Psalm 145:9", "Proverbs 21:21", "John 8:32", "Romans 8:18", "Ephesians 6:11", "Isaiah 1:18", "Psalm 42:1", "Hebrews 13:16", "1 John 4:7", "Matthew 6:21",
+            "Psalm 119:103", "Proverbs 28:13", "John 15:7", "Romans 15:7", "1 Corinthians 2:9", "Isaiah 40:3", "Psalm 51:12", "Philippians 4:11", "Matthew 21:22", "Zephaniah 3:17",
+            "Psalm 30:5", "Proverbs 16:9", "John 1:5", "Romans 14:8", "Ephesians 4:26", "Isaiah 57:15", "Psalm 103:12", "Hebrews 6:19", "1 John 2:1", "Matthew 5:14",
+            "Psalm 126:5", "Proverbs 13:20", "John 14:1", "Romans 12:15", "1 Corinthians 6:19", "Isaiah 49:15", "Psalm 9:9", "Philippians 1:21", "Matthew 7:24", "Jude 1:24",
+            "Psalm 119:114", "Proverbs 29:25", "John 20:31", "Romans 5:3", "Ephesians 5:20", "Isaiah 53:6", "Psalm 113:3", "Hebrews 10:23", "1 John 1:7", "Matthew 10:29",
+            "Psalm 34:7", "Proverbs 11:25", "John 15:12", "Romans 8:14", "1 Corinthians 10:31", "Isaiah 33:2", "Psalm 46:10", "Philippians 2:5", "Matthew 19:14", "Deuteronomy 31:6",
+            "Psalm 143:8", "Proverbs 10:12", "John 12:46", "Romans 12:9", "Ephesians 2:19", "Isaiah 40:11", "Psalm 121:8", "Hebrews 4:12", "1 John 5:14", "Matthew 5:5",
+            "Psalm 5:3", "Proverbs 15:22", "John 4:24", "Romans 10:13", "1 Corinthians 13:13", "Isaiah 55:8", "Psalm 18:30", "Philippians 3:20", "Matthew 11:30", "1 Peter 1:24",
+            "Psalm 119:130", "Proverbs 16:24", "John 6:47", "Romans 8:26", "Ephesians 4:31", "Isaiah 41:11", "Psalm 37:23", "Hebrews 11:3", "1 John 4:16", "Matthew 6:14",
+            "Psalm 19:1", "Proverbs 18:24", "John 16:13", "Romans 11:33", "1 Corinthians 15:57", "Isaiah 43:1", "Psalm 145:14", "Philippians 4:5", "Matthew 5:10", "Psalm 100:4",
+            "Psalm 119:11", "Proverbs 20:22", "John 14:26", "Romans 12:3", "Ephesians 6:12", "Isaiah 50:10", "Psalm 31:19", "Hebrews 12:2", "1 John 2:15", "Matthew 7:8",
+            "Psalm 146:5", "Proverbs 23:17", "John 15:9", "Romans 5:10", "1 Corinthians 13:1", "Isaiah 60:1", "Psalm 25:5", "Philippians 1:9", "Matthew 28:19", "Habakkuk 3:19",
+            "Psalm 119:18", "Proverbs 15:33", "John 1:14", "Romans 8:16", "Ephesians 5:2", "Isaiah 12:3", "Psalm 145:17", "Hebrews 13:2", "1 John 4:10", "Matthew 6:20",
+            "Psalm 27:4", "Proverbs 16:1", "John 14:12", "Romans 12:19", "1 Corinthians 2:5", "Isaiah 59:1", "Psalm 121:7", "Philippians 2:14", "Matthew 18:4", "Ezra 8:22",
+            "Psalm 119:160", "Proverbs 24:16", "John 10:27", "Romans 13:10", "Ephesians 4:1", "Isaiah 45:22", "Psalm 68:19", "Hebrews 12:14", "1 John 5:5", "Matthew 5:11",
+            "Psalm 34:10", "Proverbs 10:22", "John 13:35", "Romans 14:17", "1 Corinthians 14:33", "Isaiah 25:1", "Psalm 115:1", "Philippians 3:13", "Matthew 6:24", "Psalm 107:9",
+            "Psalm 119:71", "Proverbs 12:1", "John 15:16", "Romans 15:13", "Ephesians 6:18", "Isaiah 40:28", "Psalm 23:6", "Hebrews 11:7", "1 John 3:2", "Matthew 5:12",
+            "Psalm 37:3", "Proverbs 2:6", "John 14:16", "Psalm 119:105", "1 Corinthians 16:13"
+        ];
+
+        function getDayOfYear() {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 0);
+            const diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+            const oneDay = 1000 * 60 * 60 * 24;
+            return Math.floor(diff / oneDay);
+        }
+
+        async function fetchDailyVerse() {
+            document.getElementById('loading-text').innerText = t.loading;
+            document.getElementById('footer-text').innerText = t.footer;
+            document.getElementById('copy-btn').innerText = t.copy;
+            document.getElementById('prayer-btn').innerText = "✨ " + t.prayerTitle;
+            document.getElementById('church-btn').innerText = "✨ " + t.churchTitle;
+
+            const dateDisplay = document.getElementById('date-display');
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateDisplay.innerText = new Date().toLocaleDateString(fullLang, dateOptions);
+
+            const dayOfYear = getDayOfYear();
+            // Map the day to the specific index (0-364)
+            const reference = verseList[dayOfYear % verseList.length];
+
+            try {
+                const response = await fetch(`https://bible-api.com/${encodeURIComponent(reference)}?translation=${t.translation}`);
+                const data = await response.json();
+                document.getElementById('verse-text').innerText = data.text.trim();
+                document.getElementById('verse-ref').innerText = data.reference;
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('content').classList.remove('hidden');
+            } catch (err) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').classList.remove('hidden');
+            }
+        }
+
+        function showContent(type) {
+            const panel = document.getElementById('insight-panel');
+            panel.classList.remove('hidden');
+            document.getElementById('panel-title').innerText = type === 'prayer' ? t.prayerTitle : t.churchTitle;
+            document.getElementById('panel-body').innerText = type === 'prayer' ? t.prayer : t.church;
+        }
+
+        function copyVerse() {
+            const text = document.getElementById('verse-text').innerText + " (" + document.getElementById('verse-ref').innerText + ")";
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            
+            const btn = document.getElementById('copy-btn');
+            const originalText = t.copy;
+            btn.innerText = t.copied;
+            setTimeout(() => btn.innerText = originalText, 2000);
+        }
+
+        window.onload = fetchDailyVerse;
+    </script>
+</body>
+</html>
